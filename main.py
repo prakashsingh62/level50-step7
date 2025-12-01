@@ -1,35 +1,43 @@
-import os
-import json
-from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import build
+from logic_engine import run_step7
+from write_api import write_to_sheet
+from email_sender import send_email
+from parser import parse_sheet_rows
+from templates import build_email_template
 
-def load_credentials():
-    client_secret = os.environ.get("CLIENT_SECRET_JSON")
-    token_json = os.environ.get("TOKEN_JSON")
+def main():
+    try:
+        print("🔁 Running Level-50 Step-7 Test on Railway…")
 
-    if not client_secret:
-        raise Exception("CLIENT_SECRET_JSON not found in Railway variables")
+        # 1. Process sheet data
+        rows = parse_sheet_rows()
+        print(f"📄 Parsed {len(rows)} rows")
 
-    if token_json:
-        # Load existing token
-        creds_data = json.loads(token_json)
-        creds = Credentials.from_authorized_user_info(creds_data)
-    else:
-        raise Exception("TOKEN_JSON missing. Run OAuth flow locally to generate it.")
+        # 2. Run logic engine
+        results = run_step7(rows)
+        print("⚙ Logic engine completed")
 
-    return creds
+        # 3. Build email content
+        email_body = build_email_template(results)
+        print("✉ Email template generated")
+
+        # 4. Send email via OAuth Gmail
+        send_email(
+            to="sales@ventilengineering.com",
+            subject="Level-50 Step-7 Test Run",
+            body=email_body
+        )
+        print("📨 Email sent successfully")
+
+        # 5. Write back to Google Sheet
+        write_to_sheet(results)
+        print("📊 Sheet updated")
+
+        return {"status": "success", "message": "Step-7 completed"}
+
+    except Exception as e:
+        print("❌ ERROR:", str(e))
+        return {"status": "error", "message": str(e)}
 
 
-def run_step7():
-    creds = load_credentials()
-
-    service = build('sheets', 'v4', credentials=creds)
-    sheet = service.spreadsheets()
-
-    # TEST READ
-    result = sheet.values().get(
-        spreadsheetId="1hKMwlnN3GAE4dxVGvq2WHT2-Om9SJ3P91L8cxioAeoo",
-        range="RFQ TEST SHEET!A1"
-    ).execute()
-
-    return result
+if __name__ == "__main__":
+    main()
