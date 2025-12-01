@@ -1,15 +1,23 @@
-from datetime import datetime, timedelta
+# logic_engine.py
+# Level-50 Step-7 Logic Engine (Test Mode)
 
-def classify(row):
-    cp=row.get('CONCERN PERSON','').strip().upper()
-    if cp=='NP': return {'section':'Skip','action':'No action (NP)'}
-    due=datetime.strptime(row['DUE DATE'],'%Y-%m-%d')
-    today=datetime.now()+timedelta(hours=5,minutes=30)
-    days_left=(due.date()-today.date()).days
-    if row.get('VENDOR RESPONSE RECEIVED','').lower() in ('yes','y'):
-        return {'section':'Quotation Received','action':'No reminder'}
-    if days_left<0: return {'section':'Overdue','action':'Overdue — escalate'}
-    if days_left<=2: return {'section':'High','action':'Urgent reminder'}
-    if days_left<=3: return {'section':'Medium','action':'Reminder'}
-    if days_left<=4: return {'section':'Low','action':'Monitor'}
-    return {'section':'Low','action':'No action'}
+def run_step7(rows):
+    """
+    rows → list of sheet rows
+    returns → dictionary of actions
+    """
+
+    results = {
+        "total_rows": len(rows),
+        "actions": []
+    }
+
+    for r in rows:
+        action = {
+            "rfq_no": r.get("RFQ NO", ""),
+            "status": "TEST_MODE_OK",
+            "message": "Processed in Step-7 test run"
+        }
+        results["actions"].append(action)
+
+    return results
